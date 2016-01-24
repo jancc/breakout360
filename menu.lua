@@ -4,6 +4,7 @@ Menu.selected = 1
 Menu.activated = false
 Menu.buttonHeight = 16
 Menu.buttonOffset = 64
+Menu.allowJoyMove = true
 
 function Menu:button(text)
 	table.insert(self.buttons, text)
@@ -25,6 +26,23 @@ function Menu:keypressed(key)
 		self:moveDown()
 	elseif key == "space" then
 		self.activated = true
+	end
+end
+
+function Menu:joypressed(button)
+	if button == 1 then
+		self.activated = true
+	end
+end
+
+function Menu:joyMove(axis)
+	if self.allowJoyMove then
+		if axis > 0 then
+			self:moveDown()
+		elseif axis < 0 then
+			self:moveUp()
+		end
+		self.allowJoyMove = false
 	end
 end
 

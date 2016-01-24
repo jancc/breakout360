@@ -18,6 +18,9 @@ playerX = 0
 playerY = 0
 inputX = 0
 inputY = 0
+joystick = nil
+joyX = 0
+joyY = 0
 playerEdgeDistance = 0.28
 mouseSensitivity = 0.005
 shots = {}
@@ -29,6 +32,11 @@ blocksHeight = 4
 blocksXStart = circleCenterX - (blocksXCount/2 + 1)*blocksWidth
 blocksYStart = circleCenterY - (blocksYCount/2 + 1)*blocksHeight
 points = 0
+
+function resetMouse()
+	inputX = 0
+	inputY = 0
+end
 
 function circleAngleToPoint(circleAngle)
 	local x = circleCenterX + circleRadius * math.cos(circleAngle)
@@ -183,12 +191,17 @@ function updateShots()
 end
 
 function updatePlayer()
-	if vec2length(inputX, inputY) > 0.25 then
-		playerPos = vec2angle(inputX, inputY)
-	elseif love.keyboard.isDown("right") then
+	if love.keyboard.isDown("right") then
 		playerPos = playerPos + love.timer.getDelta() * 3
+		resetMouse()
 	elseif love.keyboard.isDown("left") then
 		playerPos = playerPos - love.timer.getDelta() * 3
+		resetMouse()
+	elseif vec2length(joyX, joyY) > 0.25 then
+		playerPos = vec2angle(joyX, joyY)
+		resetMouse()
+	elseif vec2length(inputX, inputY) > 0.25 then
+		playerPos = vec2angle(inputX, inputY)
 	end
 	playerX, playerY = circleAngleToPoint(playerPos)
 	if playerPos > math.pi then
@@ -262,6 +275,11 @@ function updateMenu()
 	if Menu:button("Quit") then
 		love.event.quit()
 	end
+	if math.abs(joyY) > 0.5 then
+		Menu:joyMove(joyY)
+	else
+		Menu.allowJoyMove = true
+	end
 	Menu:update()
 end
 
@@ -291,6 +309,14 @@ function setState(state)
 	end
 end
 
+function toggleState()
+	if gamestate == "game" then
+		setState("menu")
+	elseif gamestate == "menu" then
+		setState("game")
+	end
+end
+
 function love.mousemoved(x, y, dx, dy)
 	canvasMouseX = x / (love.graphics.getWidth() / canvasW)
 	canvasMouseY = y / (love.graphics.getHeight() / canvasH)
@@ -314,19 +340,42 @@ end
 
 function love.keypressed(key, scancode, isRepeat)
 	if key == "escape" and not isRepeat then
-		if gamestate == "game" then
-			setState("menu")
-		else
-			setState("game")
-		end
+		toggleState()
 	end
 	if gamestate == "menu" then
 		Menu:keypressed(key)
+	elseif gamestate == "game" and key == "space" then
+		shoot()
 	end
 	if key == "return" and love.keyboard.isDown("lalt") then
 		local fullscreen = love.window.getFullscreen()
 		fullscreen = not fullscreen
 		love.window.setFullscreen(fullscreen)
+	end
+end
+
+function love.joystickadded(newJoystick)
+	if joystick == nil then
+		joystick = newJoystick
+	end
+end
+
+function love.joystickremoved(removedJoystick)
+	if joystick == removedJoystick then
+		joystick = nil
+	end
+end
+
+function love.joystickpressed(pressedJoystick, button)
+	if joystick == pressedJoystick then
+		if button == 2 then
+			toggleState()
+		end
+		if gamestate == "menu" then
+			Menu:joypressed(button)
+		elseif gamestate == "game" and button == 1 then
+			shoot()
+		end
 	end
 end
 
@@ -336,8 +385,6 @@ function love.load()
 	love.graphics.setLineWidth(1)
 	love.graphics.setLineStyle("rough")
 	love.mouse.setVisible(false)
-	local joysticks = love.joystick.getJoysticks()
-	joystick = joysticks[1]
 	setState("menu")
 	initGame()
 	Audio.mute = true
@@ -346,6 +393,13 @@ function love.load()
 end
 
 function love.update(dt)
+	if joystick ~= nil then
+		joyX = joystick:getAxis(1)
+		joyY = joystick:getAxis(2)
+	else
+		joyX = 0
+		joyY = 0
+	end
 	if gamestate == "game" then
 		updateGame()
 	elseif gamestate == "menu" then
