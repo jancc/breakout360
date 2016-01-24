@@ -10,6 +10,7 @@ canvasMouseX = 0
 canvasMouseY = 0
 canvas = nil
 gamestate = "none"
+gameInitialized = false
 circleCenterX = canvasW / 2
 circleCenterY = canvasH / 2
 circleRadius = canvasH * 0.45
@@ -250,6 +251,8 @@ function initGame()
 	genBlocks()
 	playerPos = 0
 	points = 0
+	shots = {}
+	gameInitialized = true
 end
 
 function updateGame()
@@ -259,18 +262,28 @@ end
 
 function updateMenu()
 	Menu:clear()
-	if Menu:button("Play") then
-		initGame()
-		setState("game")
-	end
-	if Menu:button("Scores") then
-		
-	end
-	if Menu:button("Settings") then
+	if gameInitialized then
+		if Menu:button("Continue") then
+			setState("game")
+		end
+		if Menu:button("Back to menu") then
+			setState("menu")
+			gameInitialized = false
+		end
+	else
+		if Menu:button("Play") then
+			initGame()
+			setState("game")
+		end
+		if Menu:button("Scores") then
+			
+		end
+		if Menu:button("Settings") then
 	
-	end
-	if Menu:button("Visit JanCC.de") then
-		love.system.openURL("http://jancc.de")
+		end
+		if Menu:button("Visit JanCC.de") then
+			love.system.openURL("http://jancc.de")
+		end
 	end
 	if Menu:button("Quit") then
 		love.event.quit()
@@ -386,7 +399,6 @@ function love.load()
 	love.graphics.setLineStyle("rough")
 	love.mouse.setVisible(false)
 	setState("menu")
-	initGame()
 	Audio.mute = true
 	Audio:loadAll()
 	--Audio:playMusic("arena1.s3m")
