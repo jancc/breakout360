@@ -33,7 +33,10 @@ blocksHeight = 4
 blocksXStart = circleCenterX - (blocksXCount/2 + 1)*blocksWidth
 blocksYStart = circleCenterY - (blocksYCount/2 + 1)*blocksHeight
 points = 0
+lifes = 3
 
+--Has to be called when you switch to the joystick
+--otherwise the paddle would always jump back to its mouse position
 function resetMouse()
 	inputX = 0
 	inputY = 0
@@ -126,6 +129,7 @@ function blockRaycast(x1, y1, x2, y2)
 	return makeRaycastHit(0, 0, false)
 end
 
+--todo: load level from a file
 function genBlocks()
 	for y=1,blocksYCount,1 do
 		for x=1,blocksXCount,1 do
@@ -135,6 +139,10 @@ function genBlocks()
 end
 
 function shoot()
+	--once we are out of lifes or a shot already exists, the function returns
+	if table.getn(shots) > 0 or lifes == 0 then
+		return
+	end
 	local shot = {}
 	shot.x = playerX
 	shot.y = playerY
@@ -158,22 +166,32 @@ function updateShots()
 	local shotCount = table.getn(shots)
 	local removeShots = {}
 	for i=1,shotCount,1 do
+		--generate movement delta of this frame
 		local dx = shots[i].vx * love.timer.getDelta( )
 		local dy = shots[i].vy * love.timer.getDelta( )
+		--the shot is at the edge of the circle (outside)
 		if not isPointInCircle(shots[i].x + dx, shots[i].y + dy) then
 			bounceShotFromCircle(shots[i])
+			--has the shot collided with the player?
 			if not circleIsPlayerOnAngle(circlePointToAngle(shots[i].x + dx, shots[i].y + dy)) then
+				--the shot has not collided with the player, remove it
+				--add shot to a removeTable, so that it can be removed without breaking this for-loop
 				table.insert(removeShots, i)
 				points = points - 10
 			else
 				Audio:playSound("paddle.wav")
 			end
 		end
+		--tests for collisions with blocks via a raycast
 		local hit = blockRaycast(shots[i].x, shots[i].y, shots[i].x + dx, shots[i].y + dy)
+		--hit position is not (0,0) so there was a hit!
 		if hit.x + hit.y > 0 then
+			--remove the block at the hit position
 			setBlockAtPos(hit.x, hit.y, 0)
+			--move the shot to the hit position
 			shots[i].x = hit.x
 			shots[i].y = hit.y
+			--bounce the shot, according to the side of the block that was hit
 			if hit.isVertical then
 				shots[i].vy = -shots[i].vy
 			else
@@ -182,29 +200,39 @@ function updateShots()
 			points = points + 1
 			Audio:playSound("brick.wav")
 		else
+			--nothing was hit, simply move the shot
 			shots[i].x = shots[i].x + dx
 			shots[i].y = shots[i].y + dy
 		end
 	end
+	--loop through the table that contains all shots that can be removed in this frame
 	for i=1,table.getn(removeShots),1 do
 		table.remove(shots, removeShots[i])
+		--this was the last shot on the field, the player has lost a life
+		if table.getn(shots) == 0 then
+			lifes = lifes - 1
+		end
 	end
 end
 
 function updatePlayer()
+	--keyboard input (left arrow, right arrow)
 	if love.keyboard.isDown("right") then
 		playerPos = playerPos + love.timer.getDelta() * 3
 		resetMouse()
 	elseif love.keyboard.isDown("left") then
 		playerPos = playerPos - love.timer.getDelta() * 3
 		resetMouse()
+	--joystick input (left stick)
 	elseif vec2length(joyX, joyY) > 0.25 then
 		playerPos = vec2angle(joyX, joyY)
 		resetMouse()
+	--mouse input
 	elseif vec2length(inputX, inputY) > 0.25 then
 		playerPos = vec2angle(inputX, inputY)
 	end
 	playerX, playerY = circleAngleToPoint(playerPos)
+	--clamps the player position to (-math.pi, +math.pi)
 	if playerPos > math.pi then
 		playerPos = -math.pi
 	elseif playerPos < -math.pi then
@@ -232,6 +260,7 @@ function drawShots()
 	end
 end
 
+--obsolete, but might be reused at a later date (or removed)
 function drawShapes()
 	local shapesCount = table.getn(shapes)
 	for i=1,shapesCount,1 do
@@ -247,10 +276,12 @@ function drawPlayer()
 	love.graphics.pop()
 end
 
+--gets called whenever a new game is started
 function initGame()
 	genBlocks()
 	playerPos = 0
 	points = 0
+	lifes = 3
 	shots = {}
 	gameInitialized = true
 end
@@ -260,7 +291,10 @@ function updateGame()
 	updatePlayer()
 end
 
+--updates immediate mode menu
 function updateMenu()
+	--clear the menu because buttons get re-added every frame
+	--not the fastest solution but very simple to use
 	Menu:clear()
 	if gameInitialized then
 		if Menu:button("Continue") then
@@ -303,7 +337,7 @@ function drawGame()
 	drawBlocks()
 	drawShots()
 	drawPlayer()
-	love.graphics.print("Points: " .. tostring(points), 0, 0)
+	love.graphics.print("Points: " .. tostring(points) .. "\nLifes: " .. tostring(lifes), 0, 0)
 end
 
 function drawMenu()
@@ -420,6 +454,7 @@ function love.update(dt)
 end
 
 function love.draw()
+	--draws graphics to a canvas, so that they can be rescaled easily
 	love.graphics.setCanvas(canvas)
 	love.graphics.clear()
 	love.graphics.setColor(255, 255, 255)
