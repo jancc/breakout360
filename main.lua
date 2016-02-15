@@ -14,6 +14,7 @@ gameInitialized = false
 circleCenterX = canvasW / 2
 circleCenterY = canvasH / 2
 circleRadius = canvasH * 0.45
+playerCount = 8
 playerPos = 0
 playerX = 0
 playerY = 0
@@ -42,6 +43,11 @@ function resetMouse()
 	inputY = 0
 end
 
+function getPlayerPosition(id)
+	mod = (math.pi * 2 / playerCount)*id
+	return ((playerPos + mod + math.pi) % (math.pi*2)) - math.pi
+end
+
 function circleAngleToPoint(circleAngle)
 	local x = circleCenterX + circleRadius * math.cos(circleAngle)
 	local y = circleCenterY + circleRadius * math.sin(circleAngle)
@@ -59,8 +65,13 @@ function circleGetOppositePoint(x, y)
 end
 
 function circleIsPlayerOnAngle(angle)
-	local delta = math.abs(playerPos - angle)
-	return delta < playerEdgeDistance or delta > math.pi * 2 - playerEdgeDistance
+	for i=1,playerCount,1 do
+		local delta = math.abs(getPlayerPosition(i) - angle)
+		if delta < playerEdgeDistance or delta > math.pi * 2 - playerEdgeDistance then
+			return true, i
+		end
+	end
+	return false, 0
 end
 
 function isPointInCircle(x, y)
@@ -153,8 +164,8 @@ function shoot()
 	table.insert(shots, shot)
 end
 
-function bounceShotFromCircle(shot)
-	local mod = circlePointToAngle(shot.x, shot.y) - playerPos
+function bounceShotFromCircle(shot, playerId)
+	local mod = circlePointToAngle(shot.x, shot.y) - getPlayerPosition(playerId)
 	shot.angle = circlePointToAngle(shot.x, shot.y) - mod * 3.5 + math.pi
 	shot.vx, shot.vy = vec2rotate(shot.speed, 0, shot.angle)
 	shot.x, shot.y = vec2normalize(shot.x - circleCenterX, shot.y - circleCenterY)
@@ -171,15 +182,16 @@ function updateShots()
 		local dy = shots[i].vy * love.timer.getDelta( )
 		--the shot is at the edge of the circle (outside)
 		if not isPointInCircle(shots[i].x + dx, shots[i].y + dy) then
-			bounceShotFromCircle(shots[i])
+			local collided, playerId = circleIsPlayerOnAngle(circlePointToAngle(shots[i].x + dx, shots[i].y + dy))
 			--has the shot collided with the player?
-			if not circleIsPlayerOnAngle(circlePointToAngle(shots[i].x + dx, shots[i].y + dy)) then
+			if not collided then
 				--the shot has not collided with the player, remove it
 				--add shot to a removeTable, so that it can be removed without breaking this for-loop
 				table.insert(removeShots, i)
 				points = points - 10
 			else
 				Audio:playSound("paddle.wav")
+				bounceShotFromCircle(shots[i], playerId)
 			end
 		end
 		--tests for collisions with blocks via a raycast
@@ -233,11 +245,12 @@ function updatePlayer()
 	end
 	playerX, playerY = circleAngleToPoint(playerPos)
 	--clamps the player position to (-math.pi, +math.pi)
-	if playerPos > math.pi then
-		playerPos = -math.pi
-	elseif playerPos < -math.pi then
-		playerPos = math.pi
-	end
+	playerPos = ((playerPos + math.pi) % (math.pi*2)) - math.pi
+	--if playerPos > math.pi then
+	--	playerPos = -math.pi
+	--elseif playerPos < -math.pi then
+	--	playerPos = math.pi
+	--end
 end
 
 function drawBlocks()
@@ -268,12 +281,18 @@ function drawShapes()
 	end
 end
 
-function drawPlayer()
+function drawPlayer(id)
 	love.graphics.push()
-	love.graphics.translate(circleAngleToPoint(playerPos))
-	love.graphics.rotate(playerPos)
+	love.graphics.translate(circleAngleToPoint(getPlayerPosition(id)))
+	love.graphics.rotate(getPlayerPosition(id))
 	love.graphics.rectangle("fill", -4, -20, 8, 40)
 	love.graphics.pop()
+end
+
+function drawPlayers()
+	for i=1,playerCount,1 do
+		drawPlayer(i)
+	end
 end
 
 --gets called whenever a new game is started
@@ -336,7 +355,7 @@ function drawGame()
 	love.graphics.circle("line", circleCenterX, circleCenterY, circleRadius)
 	drawBlocks()
 	drawShots()
-	drawPlayer()
+	drawPlayers()
 	love.graphics.print("Points: " .. tostring(points) .. "\nLifes: " .. tostring(lifes), 0, 0)
 end
 
