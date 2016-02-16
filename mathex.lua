@@ -11,6 +11,10 @@ function vec2normalize(x, y)
 	return x/length, y/length
 end
 
+function vec2scale(x, y, factor)
+	return x*factor, y*factor
+end
+
 function vec2rotate(x, y, angle)
 	local sin = math.sin(angle)
 	local cos = math.cos(angle)

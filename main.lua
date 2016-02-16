@@ -14,7 +14,7 @@ gameInitialized = false
 circleCenterX = canvasW / 2
 circleCenterY = canvasH / 2
 circleRadius = canvasH * 0.45
-playerCount = 8
+playerCount = 1
 playerPos = 0
 playerX = 0
 playerY = 0
@@ -26,6 +26,7 @@ joyY = 0
 playerEdgeDistance = 0.28
 mouseSensitivity = 0.005
 shots = {}
+powerups = {}
 blocks = {}
 blocksXCount = 12
 blocksYCount = 20
@@ -88,6 +89,14 @@ function setBlock(x, y, b)
 	blocks[blocksXCount * y + x] = b
 end
 
+function setBlockArea(x, y, size, b)
+	for posY=-size,size,1 do
+		for posX=-size,size,1 do
+			setBlock(x + posX, y + posY, b)
+		end
+	end
+end
+
 function getBlock(x, y)
 	if x < 1 or y < 1 or x > blocksXCount or y > blocksYCount then
 		return 0
@@ -99,6 +108,12 @@ function setBlockAtPos(x, y, b)
 	local tx = math.floor((x - blocksXStart) / blocksWidth)
 	local ty = math.floor((y - blocksYStart) / blocksHeight)
 	return setBlock(tx, ty, b)
+end
+
+function setBlockAreaAtPos(x, y, size, b)
+	local tx = math.floor((x - blocksXStart) / blocksWidth)
+	local ty = math.floor((y - blocksYStart) / blocksHeight)
+	return setBlockArea(tx, ty, size, b)
 end
 
 function getBlockAtPos(x, y)
@@ -149,7 +164,7 @@ function genBlocks()
 	end
 end
 
-function shoot()
+function makeShot()
 	--once we are out of lifes or a shot already exists, the function returns
 	if table.getn(shots) > 0 or lifes == 0 then
 		return
@@ -161,7 +176,22 @@ function shoot()
 	shot.speed = 96
 	shot.vx, shot.vy = vec2rotate(shot.speed, 0, shot.angle)
 	shot.insideCircle = false
+	--powerups
+	--how large the area of destroyed blocks is (0 = only the hit block is destroyed)
+	shot.area = 0
+	--rocket-mode = shot does not bounce but move straight through blocks
+	shot.rocket = false
 	table.insert(shots, shot)
+end
+
+function makePowerup(x, y, effect)
+	local powerup = {}
+	powerup.x = x
+	powerup.y = y
+	powerup.vx, powerup.vy = vec2normalize(x - circleCenterX, y - circleCenterY)
+	powerup.vx, powerup.vy = vec2scale(powerup.vx, powerup.vy, 32)
+	powerup.effect = effect
+	table.insert(powerups, powerup)
 end
 
 function bounceShotFromCircle(shot, playerId)
@@ -199,7 +229,7 @@ function updateShots()
 		--hit position is not (0,0) so there was a hit!
 		if hit.x + hit.y > 0 then
 			--remove the block at the hit position
-			setBlockAtPos(hit.x, hit.y, 0)
+			setBlockAreaAtPos(hit.x, hit.y, 0, 0)
 			--move the shot to the hit position
 			shots[i].x = hit.x
 			shots[i].y = hit.y
@@ -210,6 +240,7 @@ function updateShots()
 				shots[i].vx = -shots[i].vx
 			end
 			points = points + 1
+			makePowerup(hit.x, hit.y, "rocket")
 			Audio:playSound("brick.wav")
 		else
 			--nothing was hit, simply move the shot
@@ -224,6 +255,28 @@ function updateShots()
 		if table.getn(shots) == 0 then
 			lifes = lifes - 1
 		end
+	end
+end
+
+function updatePowerups()
+	local powerupsCount = table.getn(powerups)
+	local removePowerups = {}
+	for i=1,powerupsCount,1 do
+		powerups[i].x = powerups[i].x + powerups[i].vx * love.timer.getDelta( )
+		powerups[i].y = powerups[i].y + powerups[i].vy * love.timer.getDelta( )
+		if not isPointInCircle(powerups[i].x, powerups[i].y) then
+			local collided = circleIsPlayerOnAngle(circlePointToAngle(powerups[i].x, powerups[i].y))
+			if collided then
+				lifes = lifes + 1
+			else
+				
+			end
+			table.insert(removePowerups, i)
+		end
+	end
+	--loop through the table that contains all powerups that can be removed in this frame
+	for i=1,table.getn(removePowerups),1 do
+		table.remove(powerups, removePowerups[i])
 	end
 end
 
@@ -273,11 +326,10 @@ function drawShots()
 	end
 end
 
---obsolete, but might be reused at a later date (or removed)
-function drawShapes()
-	local shapesCount = table.getn(shapes)
-	for i=1,shapesCount,1 do
-		love.graphics.circle("fill", shapes[i].x, shapes[i].y, shapes[i].scale, shapes[i].segments)
+function drawPowerups()
+	local powerupsCount = table.getn(powerups)
+	for i=1,powerupsCount,1 do
+		love.graphics.rectangle("fill", powerups[i].x - 1, powerups[i].y - 1, 2, 2)
 	end
 end
 
@@ -299,6 +351,7 @@ end
 function initGame()
 	genBlocks()
 	playerPos = 0
+	playerCount = 1
 	points = 0
 	lifes = 3
 	shots = {}
@@ -307,6 +360,7 @@ end
 
 function updateGame()
 	updateShots()
+	updatePowerups()
 	updatePlayer()
 end
 
@@ -355,6 +409,7 @@ function drawGame()
 	love.graphics.circle("line", circleCenterX, circleCenterY, circleRadius)
 	drawBlocks()
 	drawShots()
+	drawPowerups()
 	drawPlayers()
 	love.graphics.print("Points: " .. tostring(points) .. "\nLifes: " .. tostring(lifes), 0, 0)
 end
@@ -397,7 +452,7 @@ end
 function love.mousepressed(x, y, button)
 	if gamestate == "game" then
 		if button == 1 then
-			shoot()
+			makeShot()
 		end
 	elseif gamestate == "menu" then
 		Menu:mousepressed(x, y, button)
@@ -411,7 +466,7 @@ function love.keypressed(key, scancode, isRepeat)
 	if gamestate == "menu" then
 		Menu:keypressed(key)
 	elseif gamestate == "game" and key == "space" then
-		shoot()
+		makeShot()
 	end
 	if key == "return" and love.keyboard.isDown("lalt") then
 		local fullscreen = love.window.getFullscreen()
@@ -440,7 +495,7 @@ function love.joystickpressed(pressedJoystick, button)
 		if gamestate == "menu" then
 			Menu:joypressed(button)
 		elseif gamestate == "game" and button == 1 then
-			shoot()
+			makeShot()
 		end
 	end
 end
