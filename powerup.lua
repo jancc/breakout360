@@ -1,10 +1,15 @@
-function makePowerup(x, y, effect)
+function makePowerup(x, y)
 	local powerup = {}
 	powerup.x = x
 	powerup.y = y
 	powerup.vx, powerup.vy = vec2normalize(x - circleCenterX, y - circleCenterY)
 	powerup.vx, powerup.vy = vec2scale(powerup.vx, powerup.vy, 32)
-	powerup.effect = effect
+	local func = math.random(0, 1)
+	if func == 0 then
+		powerup.func = powerupFuncAnotherLife
+	elseif func == 1 then
+		powerup.func = powerupFuncAnotherPlayer
+	end
 	table.insert(powerups, powerup)
 end
 
@@ -17,7 +22,7 @@ function updatePowerups()
 		if not isPointInCircle(powerups[i].x, powerups[i].y) then
 			local collided = circleIsPlayerOnAngle(circlePointToAngle(powerups[i].x, powerups[i].y))
 			if collided then
-				lifes = lifes + 1
+				powerups[i].func()
 			else
 				
 			end
@@ -35,4 +40,12 @@ function drawPowerups()
 	for i=1,powerupsCount,1 do
 		love.graphics.rectangle("fill", powerups[i].x - 1, powerups[i].y - 1, 2, 2)
 	end
+end
+
+function powerupFuncAnotherLife()
+	lifes = lifes + 1
+end
+
+function powerupFuncAnotherPlayer()
+	playerCount = playerCount + 1
 end

@@ -153,7 +153,7 @@ end
 function love.mousepressed(x, y, button)
 	if gamestate == "game" then
 		if button == 1 then
-			makeShot()
+			shoot()
 		end
 	elseif gamestate == "menu" then
 		Menu:mousepressed(x, y, button)
@@ -167,7 +167,7 @@ function love.keypressed(key, scancode, isRepeat)
 	if gamestate == "menu" then
 		Menu:keypressed(key)
 	elseif gamestate == "game" and key == "space" then
-		makeShot()
+		shoot()
 	end
 	if key == "return" and love.keyboard.isDown("lalt") then
 		local fullscreen = love.window.getFullscreen()
@@ -196,7 +196,7 @@ function love.joystickpressed(pressedJoystick, button)
 		if gamestate == "menu" then
 			Menu:joypressed(button)
 		elseif gamestate == "game" and button == 1 then
-			makeShot()
+			shoot()
 		end
 	end
 end

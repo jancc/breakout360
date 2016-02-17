@@ -1,8 +1,4 @@
 function makeShot()
-	--once we are out of lifes or a shot already exists, the function returns
-	if table.getn(shots) > 0 or lifes == 0 then
-		return
-	end
 	local shot = {}
 	shot.x = playerX
 	shot.y = playerY
@@ -16,6 +12,21 @@ function makeShot()
 	--rocket-mode = shot does not bounce but move straight through blocks
 	shot.rocket = false
 	table.insert(shots, shot)
+	return shot
+end
+
+function makeShotAtPos(x, y)
+	local shot = makeShot()
+	shot.x = x
+	shot.y = y
+	shot.speed = 96
+end
+
+function shoot()
+	--once we are out of lifes or a shot already exists, the function returns
+	if table.getn(shots) == 0 and lifes > 0 then
+		makeShot()
+	end
 end
 
 function bounceShotFromCircle(shot, playerId)
@@ -64,7 +75,9 @@ function updateShots()
 				shots[i].vx = -shots[i].vx
 			end
 			points = points + 1
-			makePowerup(hit.x, hit.y, "rocket")
+			if math.random(0, 1) == 1 then
+				makePowerup(hit.x, hit.y)
+			end
 			Audio:playSound("brick.wav")
 		else
 			--nothing was hit, simply move the shot
