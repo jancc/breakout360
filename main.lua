@@ -234,9 +234,10 @@ function love.draw()
 	love.graphics.clear()
 	love.graphics.setColor(255, 255, 255)
 	love.graphics.push()
-	if gamestate == "game" then
+	if gameInitialized then
 		drawGame()
-	elseif gamestate == "menu" then
+	end
+	if gamestate == "menu" then
 		drawMenu()
 	end
 	love.graphics.pop()

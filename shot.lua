@@ -69,10 +69,12 @@ function updateShots()
 			shots[i].x = hit.x
 			shots[i].y = hit.y
 			--bounce the shot, according to the side of the block that was hit
-			if hit.isVertical then
-				shots[i].vy = -shots[i].vy
-			else
-				shots[i].vx = -shots[i].vx
+			if not shots[i].rocket then
+				if hit.isVertical then
+					shots[i].vy = -shots[i].vy
+				else
+					shots[i].vx = -shots[i].vx
+				end
 			end
 			points = points + 1
 			if math.random(0, 1) == 1 then

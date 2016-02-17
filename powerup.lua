@@ -4,11 +4,13 @@ function makePowerup(x, y)
 	powerup.y = y
 	powerup.vx, powerup.vy = vec2normalize(x - circleCenterX, y - circleCenterY)
 	powerup.vx, powerup.vy = vec2scale(powerup.vx, powerup.vy, 32)
-	local func = math.random(0, 1)
+	local func = math.random(0, 2)
 	if func == 0 then
 		powerup.func = powerupFuncAnotherLife
 	elseif func == 1 then
 		powerup.func = powerupFuncAnotherPlayer
+	elseif func == 2 then
+		powerup.func = powerupFuncRocket
 	end
 	table.insert(powerups, powerup)
 end
@@ -39,6 +41,12 @@ function drawPowerups()
 	local powerupsCount = table.getn(powerups)
 	for i=1,powerupsCount,1 do
 		love.graphics.rectangle("fill", powerups[i].x - 1, powerups[i].y - 1, 2, 2)
+	end
+end
+
+function powerupFuncRocket()
+	if table.getn(shots) > 0 then
+		shots[1].rocket = true
 	end
 end
 
