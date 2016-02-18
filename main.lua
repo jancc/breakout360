@@ -6,8 +6,8 @@ require("player")
 require("shot")
 require("powerup")
 
-canvasW = 320
-canvasH = 180
+canvasW = 1280
+canvasH = 720
 canvasScaleX = 1
 canvasScaleY = 1
 canvasMouseX = 0
@@ -34,12 +34,13 @@ powerups = {}
 blocks = {}
 blocksXCount = 12
 blocksYCount = 20
-blocksWidth = 8
-blocksHeight = 4
+blocksWidth = 32
+blocksHeight = 16
 blocksXStart = circleCenterX - (blocksXCount/2 + 1)*blocksWidth
 blocksYStart = circleCenterY - (blocksYCount/2 + 1)*blocksHeight
 points = 0
 lifes = 3
+images = {}
 
 --Has to be called when you switch to the joystick
 --otherwise the paddle would always jump back to its mouse position
@@ -105,7 +106,7 @@ function updateMenu()
 end
 
 function drawGame()
-	love.graphics.setColor(255, 0, 255)
+	love.graphics.setColor(255, 100, 0)
 	--draw circle
 	love.graphics.circle("line", circleCenterX, circleCenterY, circleRadius)
 	drawBlocks()
@@ -137,6 +138,10 @@ function toggleState()
 	elseif gamestate == "menu" then
 		setState("game")
 	end
+end
+
+function loadImage(id, filename)
+	images[id] = love.graphics.newImage("gfx/" .. filename)
 end
 
 function love.mousemoved(x, y, dx, dy)
@@ -202,7 +207,7 @@ function love.joystickpressed(pressedJoystick, button)
 end
 
 function love.load()
-	love.graphics.setDefaultFilter("nearest", "nearest", 0)
+	--love.graphics.setDefaultFilter("nearest", "nearest", 0)
 	canvas = love.graphics.newCanvas(canvasW, canvasH)
 	love.graphics.setLineWidth(1)
 	love.graphics.setLineStyle("rough")
@@ -210,7 +215,11 @@ function love.load()
 	setState("menu")
 	Audio.mute = true
 	Audio:loadAll()
+	loadImage("brick", "brick.png")
+	loadImage("paddle", "paddle.png")
+	loadImage("ball", "ball.png")
 	--Audio:playMusic("arena1.s3m")
+	Menu:load()
 end
 
 function love.update(dt)
@@ -232,7 +241,6 @@ function love.draw()
 	--draws graphics to a canvas, so that they can be rescaled easily
 	love.graphics.setCanvas(canvas)
 	love.graphics.clear()
-	love.graphics.setColor(255, 255, 255)
 	love.graphics.push()
 	if gameInitialized then
 		drawGame()
@@ -244,6 +252,7 @@ function love.draw()
 	love.graphics.setCanvas()
 	canvasScaleX = love.graphics.getWidth() / canvasW
 	canvasScaleY = love.graphics.getHeight() / canvasH
+	love.graphics.setColor(255, 255, 255)
 	love.graphics.draw(canvas, 0, 0, 0, canvasScaleX, canvasScaleY)
 	love.graphics.setColor(255, 0, 0)
 	love.graphics.print("Development Version", 0, love.graphics.getHeight() - 16)

@@ -3,7 +3,7 @@ function makePowerup(x, y)
 	powerup.x = x
 	powerup.y = y
 	powerup.vx, powerup.vy = vec2normalize(x - circleCenterX, y - circleCenterY)
-	powerup.vx, powerup.vy = vec2scale(powerup.vx, powerup.vy, 32)
+	powerup.vx, powerup.vy = vec2scale(powerup.vx, powerup.vy, 128)
 	local func = math.random(0, 2)
 	if func == 0 then
 		powerup.func = powerupFuncAnotherLife

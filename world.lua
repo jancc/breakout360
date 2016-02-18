@@ -108,18 +108,28 @@ end
 function genBlocks()
 	for y=1,blocksYCount,1 do
 		for x=1,blocksXCount,1 do
-			setBlock(x, y, math.random(0, 1))
+			setBlock(x, y, math.random(0, 3))
 		end
 	end
 end
 
 function drawBlocks()
+	love.graphics.setColor(0, 255, 0)
+	local block = 0
 	for y=1,blocksYCount,1 do
 		for x=1,blocksXCount,1 do
-			if getBlock(x, y) == 1 then
+			block = getBlock(x, y)
+			if block > 0 then
+				if block == 1 then
+					love.graphics.setColor(255, 0, 0)
+				elseif block == 2 then
+					love.graphics.setColor(0, 255, 0)
+				elseif block == 3 then
+					love.graphics.setColor(0, 0, 255)
+				end
 				local xPos = x * blocksWidth + blocksXStart
 				local yPos = y * blocksHeight + blocksYStart
-				love.graphics.rectangle("line", xPos, yPos, 8, 4)
+				love.graphics.draw(images["brick"], xPos, yPos)
 			end
 		end
 	end

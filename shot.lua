@@ -3,7 +3,7 @@ function makeShot()
 	shot.x = playerX
 	shot.y = playerY
 	shot.angle = playerPos - math.pi
-	shot.speed = 96
+	shot.speed = 196
 	shot.vx, shot.vy = vec2rotate(shot.speed, 0, shot.angle)
 	shot.insideCircle = false
 	--powerups
@@ -19,7 +19,6 @@ function makeShotAtPos(x, y)
 	local shot = makeShot()
 	shot.x = x
 	shot.y = y
-	shot.speed = 96
 end
 
 function shoot()
@@ -98,9 +97,11 @@ function updateShots()
 end
 
 function drawShots()
+	love.graphics.setColor(255, 255, 0)
 	local shotCount = table.getn(shots)
 	for i=1,shotCount,1 do
 		--love.graphics.rectangle("fill", shots[i].x - 1, shots[i].y - 4, 8, 8)
-		love.graphics.points(shots[i].x, shots[i].y)
+		--love.graphics.points(shots[i].x, shots[i].y)
+		love.graphics.draw(images["ball"], shots[i].x - 4, shots[i].y - 4)
 	end
 end

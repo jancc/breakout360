@@ -2,9 +2,11 @@ Menu = {}
 Menu.buttons = {}
 Menu.selected = 1
 Menu.activated = false
-Menu.buttonHeight = 16
+Menu.buttonHeight = 64
+Menu.buttonPadding = 16
 Menu.buttonOffset = 64
 Menu.allowJoyMove = true
+Menu.font = nil
 
 function Menu:button(text)
 	table.insert(self.buttons, text)
@@ -66,11 +68,16 @@ function Menu:moveDown()
 	end
 end
 
+function Menu:load()
+	self.font = love.graphics.newFont(self.buttonHeight - self.buttonPadding)
+end
+
 function Menu:update()
 	
 end
 
 function Menu:draw()
+	love.graphics.setFont(self.font)
 	local number = table.getn(self.buttons)
 	for i=1,number,1 do
 		love.graphics.setColor(0, 0, 0, 150)
@@ -83,6 +90,7 @@ function Menu:draw()
 		love.graphics.printf(self.buttons[i], 0, self.buttonOffset + i*self.buttonHeight, canvasW, "center")
 		love.graphics.setColor(255, 255, 255)
 	end
+	--love.graphics.setFont(nil)
 end
 
 function Menu:clear()

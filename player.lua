@@ -33,11 +33,12 @@ function drawPlayer(id)
 	love.graphics.push()
 	love.graphics.translate(circleAngleToPoint(getPlayerPosition(id)))
 	love.graphics.rotate(getPlayerPosition(id))
-	love.graphics.rectangle("fill", -4, -20, 8, 40)
+	love.graphics.draw(images["paddle"], -16, -80)
 	love.graphics.pop()
 end
 
 function drawPlayers()
+	love.graphics.setColor(0, 0, 255)
 	for i=1,playerCount,1 do
 		drawPlayer(i)
 	end
