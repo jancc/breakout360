@@ -104,11 +104,26 @@ function blockRaycast(x1, y1, x2, y2)
 	return makeRaycastHit(0, 0, false)
 end
 
+function loadLevel(filename)
+	genBlocks()
+	local y = 1
+	local x = 1
+	for line in  love.filesystem.lines("levels/" .. filename) do
+		for block in string.gmatch(line, "%S+") do
+			print(block)
+			setBlock(x, y, tonumber(block))
+			x=x+1
+		end
+		x=1
+		y=y+1
+	end
+end
+
 --todo: load level from a file
 function genBlocks()
 	for y=1,blocksYCount,1 do
 		for x=1,blocksXCount,1 do
-			setBlock(x, y, math.random(0, 3))
+			setBlock(x, y, 0)
 		end
 	end
 end

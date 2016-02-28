@@ -51,7 +51,7 @@ end
 
 --gets called whenever a new game is started
 function initGame()
-	genBlocks()
+	loadLevel("01.txt")
 	playerPos = 0
 	playerCount = 1
 	points = 0
@@ -118,9 +118,6 @@ end
 
 function drawMenu()
 	Menu:draw()
-	local canvas_mouse_x = love.mouse.getX() / (love.graphics.getWidth() / canvasW)
-	local canvas_mouse_y = love.mouse.getY() / (love.graphics.getHeight() / canvasH)
-	love.graphics.points(canvas_mouse_x, canvas_mouse_y)
 end
 
 function setState(state)
@@ -145,6 +142,7 @@ function loadImage(id, filename)
 end
 
 function love.mousemoved(x, y, dx, dy)
+	love.mouse.setVisible(true)
 	canvasMouseX = x / (love.graphics.getWidth() / canvasW)
 	canvasMouseY = y / (love.graphics.getHeight() / canvasH)
 	if gamestate == "game" then
@@ -166,6 +164,7 @@ function love.mousepressed(x, y, button)
 end
 
 function love.keypressed(key, scancode, isRepeat)
+	love.mouse.setVisible(false)
 	if key == "escape" and not isRepeat then
 		toggleState()
 	end
@@ -194,6 +193,7 @@ function love.joystickremoved(removedJoystick)
 end
 
 function love.joystickpressed(pressedJoystick, button)
+	love.mouse.setVisible(false)
 	if joystick == pressedJoystick then
 		if button == 2 then
 			toggleState()
@@ -211,7 +211,6 @@ function love.load()
 	canvas = love.graphics.newCanvas(canvasW, canvasH)
 	love.graphics.setLineWidth(1)
 	love.graphics.setLineStyle("rough")
-	love.mouse.setVisible(false)
 	setState("menu")
 	Audio.mute = true
 	Audio:loadAll()
@@ -254,6 +253,4 @@ function love.draw()
 	canvasScaleY = love.graphics.getHeight() / canvasH
 	love.graphics.setColor(255, 255, 255)
 	love.graphics.draw(canvas, 0, 0, 0, canvasScaleX, canvasScaleY)
-	love.graphics.setColor(255, 0, 0)
-	love.graphics.print("Development Version", 0, love.graphics.getHeight() - 16)
 end
